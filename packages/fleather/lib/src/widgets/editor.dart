@@ -1974,7 +1974,7 @@ class RawEditorState extends EditorState
   // intent's `forward` parameter.
   void _scrollToDocumentBoundary(ScrollToDocumentBoundaryIntent intent) {
     if (intent.forward) {
-      bringIntoView(TextPosition(offset: textEditingValue.text.length));
+      bringIntoView(TextPosition(offset: textEditingValue.text.length - 1));
     } else {
       bringIntoView(const TextPosition(offset: 0));
     }

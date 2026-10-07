@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:parchment/parchment.dart';
 
+import '../fast_diff.dart';
 import 'editor.dart';
 
 mixin RawEditorStateTextInputClientMixin on EditorState
@@ -69,7 +70,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
         inputType: TextInputType.multiline,
         readOnly: widget.readOnly,
         obscureText: false,
-        enableDeltaModel: true,
+        enableDeltaModel: !kIsWeb,
         autocorrect: widget.autocorrect,
         enableSuggestions: widget.enableSuggestions,
         inputAction: TextInputAction.newline,
@@ -197,7 +198,38 @@ mixin RawEditorStateTextInputClientMixin on EditorState
 
   @override
   void updateEditingValue(TextEditingValue value) {
-    // no-op
+    // Web accessibility input can send full editing values without beforeinput
+    // deltas. Diff those values while retaining native delta input.
+    if (!kIsWeb || !shouldCreateInputConnection) return;
+    final previous = _lastKnownRemoteTextEditingValue;
+    if (previous == null || previous == value) return;
+    _lastKnownRemoteTextEditingValue = value;
+    if (!value.selection.isValid || value.selection.end > value.text.length) {
+      updateRemoteValueIfNeeded();
+      return;
+    }
+    if (previous.text == value.text) {
+      if (previous.selection != value.selection) {
+        widget.controller
+            .updateSelection(value.selection, source: ChangeSource.local);
+        updateTextInputConnectionStyle(widget.controller.selection.base);
+      }
+      return;
+    }
+    if (widget.readOnly) {
+      updateRemoteValueIfNeeded();
+      return;
+    }
+    final diff =
+        fastDiff(previous.text, value.text, value.selection.extentOffset);
+    // Parchment retains a mandatory terminal newline, which cannot be deleted
+    // or used as an insertion position beyond the document end.
+    final editableEnd = widget.controller.document.length - 1;
+    final start = min(diff.start, editableEnd);
+    final deletedLength = min(diff.deleted.length, editableEnd - start);
+    widget.controller.replaceText(start, deletedLength, diff.inserted,
+        selection: value.selection);
+    if (diff.inserted.isNotEmpty) hideToolbar(true);
   }
 
   @override
