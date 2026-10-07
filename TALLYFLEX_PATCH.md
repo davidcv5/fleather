@@ -20,15 +20,20 @@ push, so history controls otherwise remain stale until an unrelated rebuild.
 Both initial and cleared controllers use the same guarded notification path;
 history deltas and the existing grouping interval remain unchanged.
 
+History selection restoration counts retained and inserted output positions,
+excluding deleted input lengths. This keeps undo/redo selections valid for
+shorter replacements, including canonical deltas that end in deletion, while
+preserving formatting ranges.
+
 ## Validation
 
 From `packages/fleather`, using a compatible Flutter SDK:
 
 ```sh
 flutter pub get
-flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
-flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
-flutter analyze --no-pub lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
+flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
+flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
+flutter analyze --no-pub lib/src/widgets/history.dart lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
 ```
 
 The focused regressions cover full-value insertion/replacement/deletion,
