@@ -7,7 +7,11 @@ Web input uses full `TextEditingValue` updates so accessibility input that lacks
 usable `beforeinput` deltas can edit the document. The existing fast diff and
 controller apply changes, preserving formatting and history, protecting the
 mandatory terminal newline, and allowing selection in read-only editors.
-Native platforms retain the upstream delta input path. End scrolling targets
+Native platforms retain the upstream delta input path. Input connections cache
+the configuration sent on attachment and forward configuration updates only
+when settings change. This avoids redundant web input reconfiguration during
+dependency/theme rebuilds; both close paths clear the cache, and reconnects
+attach with current settings. End scrolling targets
 the final valid caret offset instead of the position beyond the document.
 
 ## Validation
@@ -16,9 +20,9 @@ From `packages/fleather`, using a compatible Flutter SDK:
 
 ```sh
 flutter pub get
-flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart
-flutter test --platform chrome test/widgets/editor_full_value_input_test.dart
-flutter analyze --no-pub lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart
+flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart
+flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart
+flutter analyze --no-pub lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart
 ```
 
 The focused regressions cover full-value insertion/replacement/deletion,

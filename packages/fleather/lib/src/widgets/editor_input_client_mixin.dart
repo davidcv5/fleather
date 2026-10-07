@@ -13,6 +13,7 @@ import 'editor.dart';
 mixin RawEditorStateTextInputClientMixin on EditorState
     implements DeltaTextInputClient {
   TextInputConnection? _textInputConnection;
+  TextInputConfiguration? _lastKnownConfiguration;
   TextEditingValue? _lastKnownRemoteTextEditingValue;
 
   /// Whether to create an input connection with the platform for text editing
@@ -52,7 +53,9 @@ mixin RawEditorStateTextInputClientMixin on EditorState
 
     if (!hasConnection) {
       _lastKnownRemoteTextEditingValue = textEditingValue;
-      _textInputConnection = TextInput.attach(this, _configuration);
+      final configuration = _configuration;
+      _textInputConnection = TextInput.attach(this, configuration);
+      _lastKnownConfiguration = configuration;
 
       _updateSizeAndTransform();
       _textInputConnection!.setEditingState(_lastKnownRemoteTextEditingValue!);
@@ -61,9 +64,13 @@ mixin RawEditorStateTextInputClientMixin on EditorState
   }
 
   void updateConnectionConfig() {
-    if (hasConnection) {
-      _textInputConnection!.updateConfig(_configuration);
-    }
+    if (!hasConnection) return;
+    final configuration = _configuration;
+    // Dependency rebuilds can leave the input configuration unchanged. Avoid
+    // reconfiguring the web input element unless its settings actually change.
+    if (configuration == _lastKnownConfiguration) return;
+    _textInputConnection!.updateConfig(configuration);
+    _lastKnownConfiguration = configuration;
   }
 
   TextInputConfiguration get _configuration => TextInputConfiguration(
@@ -87,6 +94,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
       _textInputConnection = null;
       _lastKnownRemoteTextEditingValue = null;
     }
+    _lastKnownConfiguration = null;
   }
 
   /// Updates remote value based on current state of [document] and
@@ -377,6 +385,7 @@ mixin RawEditorStateTextInputClientMixin on EditorState
       _textInputConnection = null;
       _lastKnownRemoteTextEditingValue = null;
     }
+    _lastKnownConfiguration = null;
   }
 
   void _updateSizeAndTransform() {
