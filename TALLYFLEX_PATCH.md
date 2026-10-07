@@ -14,15 +14,21 @@ dependency/theme rebuilds; both close paths clear the cache, and reconnects
 attach with current settings. End scrolling targets
 the final valid caret offset instead of the position beyond the document.
 
+The controller also notifies listeners when the existing throttled history push
+changes undo/redo availability. Immediate edit notifications occur before that
+push, so history controls otherwise remain stale until an unrelated rebuild.
+Both initial and cleared controllers use the same guarded notification path;
+history deltas and the existing grouping interval remain unchanged.
+
 ## Validation
 
 From `packages/fleather`, using a compatible Flutter SDK:
 
 ```sh
 flutter pub get
-flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart
-flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart
-flutter analyze --no-pub lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart
+flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
+flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
+flutter analyze --no-pub lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart
 ```
 
 The focused regressions cover full-value insertion/replacement/deletion,

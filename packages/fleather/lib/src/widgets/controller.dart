@@ -30,7 +30,7 @@ class FleatherController extends ChangeNotifier {
         _selection = const TextSelection.collapsed(offset: 0) {
     _throttledPush = _throttle(
       duration: throttleDuration,
-      function: _history.push,
+      function: _pushHistory,
     );
   }
 
@@ -326,6 +326,17 @@ class FleatherController extends ChangeNotifier {
     );
   }
 
+  void _pushHistory(Delta state) {
+    final couldUndo = _history.canUndo;
+    final couldRedo = _history.canRedo;
+    _history.push(state);
+    // The throttled push happens after the edit's immediate notification.
+    // Refresh history controls only when their availability has changed.
+    if (couldUndo != _history.canUndo || couldRedo != _history.canRedo) {
+      notifyListeners();
+    }
+  }
+
   /// Clear the controller state.
   ///
   /// It creates a new empty [ParchmentDocument] and a clean edit history.
@@ -347,7 +358,7 @@ class FleatherController extends ChangeNotifier {
     _history = HistoryStack.doc(document);
     _throttledPush = _throttle(
       duration: throttleDuration,
-      function: _history.push,
+      function: _pushHistory,
     );
     notifyListeners();
   }
