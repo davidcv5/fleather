@@ -25,15 +25,21 @@ excluding deleted input lengths. This keeps undo/redo selections valid for
 shorter replacements, including canonical deltas that end in deletion, while
 preserving formatting ranges.
 
+Undo and redo flush any pending edit snapshot before traversing history and
+cancel its timer. The throttle callback is reset so later edits can still be
+recorded. Ordinary editing retains the existing 500 ms grouping interval;
+traversal starts from the current document, and a new pending edit invalidates
+an old redo branch.
+
 ## Validation
 
 From `packages/fleather`, using a compatible Flutter SDK:
 
 ```sh
 flutter pub get
-flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
-flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
-flutter analyze --no-pub lib/src/widgets/history.dart lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart
+flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
+flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
+flutter analyze --no-pub lib/src/widgets/history.dart lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
 ```
 
 The focused regressions cover full-value insertion/replacement/deletion,

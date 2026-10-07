@@ -326,6 +326,19 @@ class FleatherController extends ChangeNotifier {
     );
   }
 
+  void _flushPendingHistory() {
+    if (!(_throttleTimer?.isActive ?? false)) return;
+    _throttleTimer!.cancel();
+    _throttleTimer = null;
+    // A canceled timer remains captured by the old throttle callback. Start
+    // a fresh callback so edits after undo/redo can schedule another push.
+    _throttledPush = _throttle(
+      duration: throttleDuration,
+      function: _pushHistory,
+    );
+    _pushHistory(document.toDelta());
+  }
+
   void _pushHistory(Delta state) {
     final couldUndo = _history.canUndo;
     final couldRedo = _history.canRedo;
@@ -379,11 +392,13 @@ extension HistoryHandler on FleatherController {
 
   /// Sets current document state to it's previous state, if any.
   void undo() {
+    _flushPendingHistory();
     _update(_history.undo());
   }
 
   /// Sets current document state to it's next state, if any.
   void redo() {
+    _flushPendingHistory();
     _update(_history.redo());
   }
 
