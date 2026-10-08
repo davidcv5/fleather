@@ -31,6 +31,12 @@ recorded. Ordinary editing retains the existing 500 ms grouping interval;
 traversal starts from the current document, and a new pending edit invalidates
 an old redo branch.
 
+History diffs anchor the mandatory final newline and diff its attributes
+separately. Generic text diffs can match that newline to an interior newline
+while replaying incrementally typed lines, then insert past Parchment's valid
+document boundary. The correction preserves the existing compact delta history,
+grouping, and final-line headings/list styles.
+
 ## Validation
 
 From `packages/fleather`, using a compatible Flutter SDK:
@@ -40,6 +46,8 @@ flutter pub get
 flutter test test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_client_mixin_deltas_test.dart test/widgets/editor_input_client_mixin_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
 flutter test --platform chrome test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
 flutter analyze --no-pub lib/src/widgets/history.dart lib/src/widgets/controller.dart lib/src/widgets/editor.dart lib/src/widgets/editor_input_client_mixin.dart test/widgets/editor_full_value_input_test.dart test/widgets/editor_input_configuration_test.dart test/widgets/history_notification_test.dart test/widgets/history_selection_test.dart test/widgets/history_pending_edit_test.dart
+flutter test test/widgets/history_terminal_newline_test.dart test/widgets/history_terminal_newline_matrix_test.dart
+flutter test --platform chrome test/widgets/history_terminal_newline_test.dart test/widgets/history_terminal_newline_matrix_test.dart
 ```
 
 The focused regressions cover full-value insertion/replacement/deletion,

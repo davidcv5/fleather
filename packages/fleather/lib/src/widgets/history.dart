@@ -91,7 +91,7 @@ class HistoryStack {
 
   /// Add a new document state change to the stack.
   void push(Delta newState) {
-    final redoDelta = _currentState.diff(newState);
+    final redoDelta = _diffDocument(_currentState, newState);
 
     if (redoDelta.isEmpty) return;
 
@@ -114,6 +114,33 @@ class HistoryStack {
     }
     _list.add(_Change(undoDelta, redoDelta));
     _currentIndex = _list.length - 1;
+  }
+
+  static Delta _diffDocument(Delta before, Delta after) {
+    bool endsWithNewline(Delta state) =>
+        state.isNotEmpty &&
+        state.last.data is String &&
+        (state.last.data as String).endsWith('\n');
+    if (!endsWithNewline(before) || !endsWithNewline(after)) {
+      return before.diff(after);
+    }
+    // Keep Parchment's mandatory final newline anchored. A generic diff can
+    // match it to an earlier newline and insert after the document's end.
+    final beforeEnd =
+        before.toList().fold<int>(0, (n, op) => n + op.length) - 1;
+    final afterEnd = after.toList().fold<int>(0, (n, op) => n + op.length) - 1;
+    final change = before.slice(0, beforeEnd).diff(after.slice(0, afterEnd));
+    final attributes =
+        Delta.diffAttributes(before.last.attributes, after.last.attributes);
+    if (attributes != null) {
+      final consumed = change
+          .toList()
+          .fold<int>(0, (n, op) => n + (op.isInsert ? 0 : op.length));
+      change
+        ..retain(beforeEnd - consumed)
+        ..retain(1, attributes);
+    }
+    return change;
   }
 
   /// Returns the current [_Change] to apply to current document to reach desired
